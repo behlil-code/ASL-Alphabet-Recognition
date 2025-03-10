@@ -89,7 +89,6 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 ---
 
 **Demo**  
-![ASL Recognition Demo](demo.gif)  
-*(Example output showing real-time predictions with bounding boxes and confidence scores.)*
+![ASL Recognition Demo](demo.png)  
 
 For questions or contributions, contact [bahlil2001@gmail.com].
