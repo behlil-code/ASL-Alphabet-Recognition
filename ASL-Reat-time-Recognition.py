@@ -16,9 +16,10 @@ class_labels = [
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5)
+mp_drawing = mp.solutions.drawing_utils  # For drawing landmarks
 
 # Padding value (adjust as needed)
-PADDING = 30  # Add 20 pixels padding around the hand
+PADDING = 30  # Add 30 pixels padding around the hand
 
 # Prediction buffer for majority voting
 BUFFER_SIZE = 5  # Number of predictions to consider
@@ -59,9 +60,9 @@ while True:
 
             # Add padding to the bounding box
             x_min_pad = max(0, x_min - PADDING)
-            y_min_pad = max(0, y_min - PADDING)
+            y_min_pad = max(0, y_min - 3*PADDING)
             x_max_pad = min(w, x_max + PADDING)
-            y_max_pad = min(h, y_max + PADDING)
+            y_max_pad = min(h, y_max + 3*PADDING)
 
             # Ensure valid bounding box dimensions
             if x_max_pad <= x_min_pad or y_max_pad <= y_min_pad:
@@ -78,6 +79,7 @@ while True:
             predictions = model.predict(input_data, verbose=0)
             predicted_class_index = np.argmax(predictions)
             predicted_class_label = class_labels[predicted_class_index]
+            confidence_score = np.max(predictions)
 
             # Add the current prediction to the buffer
             prediction_buffer.append(predicted_class_index)
@@ -89,10 +91,17 @@ while True:
             else:
                 stable_prediction_label = "Uncertain"
 
-            # Display the stable prediction
-            cv2.putText(frame, f"Prediction: {stable_prediction_label}", 
+            # Draw bounding box around the hand
+            box_color = (0, 255, 0) if confidence_score > 0.7 else (0, 0, 255)  # Green for high confidence, red for low
+            cv2.rectangle(frame, (x_min_pad, y_min_pad), (x_max_pad, y_max_pad), box_color, 2)
+
+            # Display the stable prediction and confidence score
+            cv2.putText(frame, f"{stable_prediction_label} ({confidence_score:.2f})", 
                         (x_min_pad, y_min_pad - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, box_color, 2)
+
+            # Draw hand landmarks
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
     cv2.imshow('Hand Gesture Recognition', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
